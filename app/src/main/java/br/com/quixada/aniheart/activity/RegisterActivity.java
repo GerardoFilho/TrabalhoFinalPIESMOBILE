@@ -1,0 +1,134 @@
+package br.com.quixada.aniheart.activity;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import br.com.quixada.aniheart.R;
+import br.com.quixada.aniheart.model.Usuario;
+import br.com.quixada.aniheart.model.UsuarioAtivo;
+import br.com.quixada.aniheart.persistence.ContextoLocalDataSource;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    Button btnRegister;
+    EditText edtName, edtEmail, edtPassword;
+
+    // firebase
+    private FirebaseAuth mAuth;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        mAuth = FirebaseAuth.getInstance();
+
+        btnRegister = findViewById(R.id.btnRegister);
+        edtName = findViewById(R.id.edtName);
+        edtEmail = findViewById(R.id.edtEmail);
+        edtPassword = findViewById(R.id.edtPassword);
+
+        btnRegister.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String email = edtEmail.getText().toString(), name = edtName.getText().toString() ,password = edtPassword.getText().toString();
+                if(!email.equals("")  && !password.equals("") && !name.equals("")){
+                    registrarUsuario(name, email, password);
+                }
+            }
+        });
+    }
+
+    private void registrarUsuario(String name, String email, String password){
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d("TAG", "createUserWithEmail:success");
+                            salvarUsuario(new Usuario(email, name));
+
+                            //updateUI(user);
+                        } else {
+
+                            Log.w("TAG", "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(RegisterActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                            //updateUI(null);
+                        }
+                        openLoginActivity();
+                    }
+                });
+    }
+
+    private void salvarUsuario(Usuario usuario){
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("usuarios")
+                .document(usuario.getEmail())
+                .set(usuario)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        salvarUsuarioAtivo(usuario);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("TAG", "Error adding document", e);
+
+                    }
+                });
+
+    }
+
+    private void salvarUsuarioAtivo(Usuario usuario){
+        String email = usuario.getEmail();
+        UsuarioAtivo usuarioAtivo = new UsuarioAtivo(email, System.currentTimeMillis());
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("usuarios_ativos").document(email)
+                .set(usuarioAtivo)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d("TAG", "DocumentSnapshot successfully written!");
+
+                        ContextoLocalDataSource.setEmail(email, RegisterActivity.this);
+                        ContextoLocalDataSource.setName(usuario.getName(), RegisterActivity.this);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("TAG", "Error writing document", e);
+                    }
+                });
+    }
+
+    private void openLoginActivity(){
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+}

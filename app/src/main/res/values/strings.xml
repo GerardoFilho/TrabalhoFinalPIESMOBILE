@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AniHeart</string>
+    <string name="username">username</string>
+    <string name="menuLogout">Logout</string>
+    <string name="navigation_drawe_open">Open navigation drawer</string>
+    <string name="navigation_drawe_close">Close Navigation drawer</string>
+    <string name="title_activity_maps">Map</string>
+</resources>
