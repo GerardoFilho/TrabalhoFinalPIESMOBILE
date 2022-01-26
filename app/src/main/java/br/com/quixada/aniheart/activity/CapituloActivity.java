@@ -1,5 +1,6 @@
 package br.com.quixada.aniheart.activity;
 
+import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,7 +38,7 @@ public class CapituloActivity extends AppCompatActivity implements SensorEventLi
         setContentView(R.layout.activity_capitulo);
         paginasRecyclerView = findViewById(R.id.recyclerViewPaginas);
 
-        sensorManager = (SensorManager) getSystemService(Service.SENSOR_SERVICE);
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensorProximity = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
     }
 
@@ -58,33 +59,27 @@ public class CapituloActivity extends AppCompatActivity implements SensorEventLi
     @Override
     protected void onResume() {
         super.onResume();
-        //sensorManager.registerListener(this, sensorLuminity, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, sensorProximity, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     private void showPaginas(Integer position, String titulo){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("mangas").document(titulo).get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                        if(task.isSuccessful()){
-                            DocumentSnapshot document = task.getResult();
-                            if(document.exists()){
-                                Manga manga = document.toObject(Manga.class);
-                                Integer qtdPaginas = Integer.parseInt(manga.getCapitulos().get(position-1).split("_")[1]);
-                                List<String> paginas = new ArrayList<>();
-                                for(int i = 0; i < qtdPaginas; i++){
-                                    paginas.add(((i < 10) ? "0":"")+i);
-                                }
-                                AdapterCapitulo adapterCapitulo = new AdapterCapitulo(CapituloActivity.this, paginas, titulo, position.toString());
-
-                                paginasRecyclerView.setAdapter(adapterCapitulo);
-                                paginasRecyclerView.setLayoutManager(new LinearLayoutManager(CapituloActivity.this));
-                                paginasRecyclerView.setHasFixedSize(true);
-
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        DocumentSnapshot document = task.getResult();
+                        if(document.exists()){
+                            Manga manga = document.toObject(Manga.class);
+                            Integer qtdPaginas = Integer.parseInt(manga.getCapitulos().get(position-1).split("_")[1]);
+                            List<String> paginas = new ArrayList<>();
+                            for(int i = 0; i < qtdPaginas; i++){
+                                paginas.add(((i < 10) ? "0":"")+i);
                             }
-                        }else{
+                            AdapterCapitulo adapterCapitulo = new AdapterCapitulo(CapituloActivity.this, paginas, titulo, position.toString());
+
+                            paginasRecyclerView.setAdapter(adapterCapitulo);
+                            paginasRecyclerView.setLayoutManager(new LinearLayoutManager(CapituloActivity.this));
+                            paginasRecyclerView.setHasFixedSize(true);
 
                         }
                     }
@@ -110,7 +105,7 @@ public class CapituloActivity extends AppCompatActivity implements SensorEventLi
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-
+        // TODO document why this method is empty
     }
 
 }

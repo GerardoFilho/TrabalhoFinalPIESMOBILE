@@ -44,15 +44,9 @@ import br.com.quixada.aniheart.model.Manga;
     public void onBindViewHolder(@NonNull MangaViewHolder holder, int position) {
         holder.txtTitulo.setText(mangaList.get(position).getTitulo());
         holder.txtAutor.setText(mangaList.get(position).getAutores());
-        //holder.txtCapituloAtual.setText(mangaList.get(position).getCapituloAtual().toString());
         Picasso.get().load(mangaList.get(position).getLinkImage()).into(holder.imageButton);
 
-        holder.imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                openMangaActivity(mangaList.get(position));
-            }
-        });
+        holder.imageButton.setOnClickListener(view -> openMangaActivity(mangaList.get(position)));
 
 
     }
@@ -66,7 +60,9 @@ import br.com.quixada.aniheart.model.Manga;
     public class MangaViewHolder extends RecyclerView.ViewHolder{
 
         ImageButton imageButton;
-        TextView txtTitulo, txtCapituloAtual, txtAutor;
+        TextView txtTitulo;
+        TextView txtCapituloAtual;
+        TextView txtAutor;
 
 
         public MangaViewHolder(@NonNull View itemView) {
@@ -101,7 +97,6 @@ import br.com.quixada.aniheart.model.Manga;
          intent.putExtra("linkImage", manga.getLinkImage());
 
          context.startActivity(intent);
-         //((Activity)context).finish();
      }
 
 }

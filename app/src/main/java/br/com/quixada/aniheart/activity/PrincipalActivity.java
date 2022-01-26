@@ -17,15 +17,10 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,28 +66,6 @@ public class PrincipalActivity extends AppCompatActivity implements NavigationVi
 
         navigationView.setNavigationItemSelectedListener(this);
 
-//        nav_perfil.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                userActivity();
-//            }
-//        });
-//
-//        nav_logout.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                logout();
-//            }
-//        });
-
-
-//        btnLogout = findViewById(R.id.btnLogout);
-//        btnLogout.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                logout();
-//            }
-//        });
     }
 
     @Override
@@ -110,21 +83,13 @@ public class PrincipalActivity extends AppCompatActivity implements NavigationVi
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("usuarios_ativos").document(email)
                 .delete()
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("TAG", "DocumentSnapshot successfully deleted!");
-                        ContextoLocalDataSource.limparContexto(PrincipalActivity.this);
-                        FirebaseAuth.getInstance().signOut();
-                        closePrincipal();
-                    }
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("TAG", "DocumentSnapshot successfully deleted!");
+                    ContextoLocalDataSource.limparContexto(PrincipalActivity.this);
+                    FirebaseAuth.getInstance().signOut();
+                    closePrincipal();
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("TAG", "Error deleting document", e);
-                    }
-                });
+                .addOnFailureListener(e -> Log.w("TAG", "Error deleting document", e));
     }
 
     private void listarMangas() {
@@ -132,26 +97,22 @@ public class PrincipalActivity extends AppCompatActivity implements NavigationVi
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("mangas")
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            List mangas = new ArrayList<Manga>();
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<Manga> mangas = new ArrayList<>();
 
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                mangas.add(document.toObject(Manga.class));
-                                //Log.d("TAG", document.getId() + " => " + document.getData());
-                            }
-
-                            AdapterManga adapterManga = new AdapterManga(PrincipalActivity.this, mangas);
-
-                            recyclerView_mangas.setAdapter(adapterManga);
-                            recyclerView_mangas.setLayoutManager(new LinearLayoutManager(PrincipalActivity.this));
-                            recyclerView_mangas.setHasFixedSize(true);
-
-                        } else {
-                            Log.d("TAG", "Error getting documents: ", task.getException());
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            mangas.add(document.toObject(Manga.class));
                         }
+
+                        AdapterManga adapterManga = new AdapterManga(PrincipalActivity.this, mangas);
+
+                        recyclerView_mangas.setAdapter(adapterManga);
+                        recyclerView_mangas.setLayoutManager(new LinearLayoutManager(PrincipalActivity.this));
+                        recyclerView_mangas.setHasFixedSize(true);
+
+                    } else {
+                        Log.d("TAG", "Error getting documents: ", task.getException());
                     }
                 });
     }
@@ -166,7 +127,6 @@ public class PrincipalActivity extends AppCompatActivity implements NavigationVi
     private void openUserActivity(){
         Intent intent = new Intent(getApplicationContext(), UserActivity.class);
         startActivity(intent);
-        //finish();
     }
 
     @Override

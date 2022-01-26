@@ -15,7 +15,7 @@ public class Manga {
     public Manga() {
     }
 
-    public Manga(String titulo, Integer capituloAtual, String autores, String linkImage, Studio studio) {
+    public Manga(String titulo, String autores, String linkImage, Studio studio) {
         this.titulo = titulo;
         this.autores = autores;
         this.linkImage = linkImage;

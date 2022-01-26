@@ -27,7 +27,9 @@ import br.com.quixada.aniheart.persistence.ContextoLocalDataSource;
 public class RegisterActivity extends AppCompatActivity {
 
     Button btnRegister;
-    EditText edtName, edtEmail, edtPassword;
+    EditText edtName;
+    EditText edtEmail;
+    EditText edtPassword;
 
     // firebase
     private FirebaseAuth mAuth;
@@ -44,37 +46,30 @@ public class RegisterActivity extends AppCompatActivity {
         edtEmail = findViewById(R.id.edtEmail);
         edtPassword = findViewById(R.id.edtPassword);
 
-        btnRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String email = edtEmail.getText().toString(), name = edtName.getText().toString() ,password = edtPassword.getText().toString();
-                if(!email.equals("")  && !password.equals("") && !name.equals("")){
-                    registrarUsuario(name, email, password);
-                }
+        btnRegister.setOnClickListener(view -> {
+            String email = edtEmail.getText().toString();
+            String name = edtName.getText().toString();
+            String password = edtPassword.getText().toString();
+            if(!email.equals("")  && !password.equals("") && !name.equals("")){
+                registrarUsuario(name, email, password);
             }
         });
     }
 
     private void registrarUsuario(String name, String email, String password){
         mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d("TAG", "createUserWithEmail:success");
-                            salvarUsuario(new Usuario(email, name));
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("TAG", "createUserWithEmail:success");
+                        salvarUsuario(new Usuario(email, name));
 
-                            //updateUI(user);
-                        } else {
+                    } else {
 
-                            Log.w("TAG", "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(RegisterActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                            //updateUI(null);
-                        }
-                        openLoginActivity();
+                        Log.w("TAG", "createUserWithEmail:failure", task.getException());
+                        Toast.makeText(RegisterActivity.this, "Authentication failed.",
+                                Toast.LENGTH_SHORT).show();
                     }
+                    openLoginActivity();
                 });
     }
 
@@ -85,19 +80,8 @@ public class RegisterActivity extends AppCompatActivity {
         db.collection("usuarios")
                 .document(usuario.getEmail())
                 .set(usuario)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        salvarUsuarioAtivo(usuario);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("TAG", "Error adding document", e);
-
-                    }
-                });
+                .addOnSuccessListener(aVoid -> salvarUsuarioAtivo(usuario))
+                .addOnFailureListener(e -> Log.w("TAG", "Error adding document", e));
 
     }
 
@@ -108,21 +92,13 @@ public class RegisterActivity extends AppCompatActivity {
 
         db.collection("usuarios_ativos").document(email)
                 .set(usuarioAtivo)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("TAG", "DocumentSnapshot successfully written!");
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("TAG", "DocumentSnapshot successfully written!");
 
-                        ContextoLocalDataSource.setEmail(email, RegisterActivity.this);
-                        ContextoLocalDataSource.setName(usuario.getName(), RegisterActivity.this);
-                    }
+                    ContextoLocalDataSource.setEmail(email, RegisterActivity.this);
+                    ContextoLocalDataSource.setName(usuario.getName(), RegisterActivity.this);
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("TAG", "Error writing document", e);
-                    }
-                });
+                .addOnFailureListener(e -> Log.w("TAG", "Error writing document", e));
     }
 
     private void openLoginActivity(){

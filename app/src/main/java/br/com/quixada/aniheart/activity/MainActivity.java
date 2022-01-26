@@ -34,8 +34,8 @@ import br.com.quixada.aniheart.persistence.ContextoLocalDataSource;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnLogin, btnCancel, btnRegister;
-    private EditText edtEmail, edtPassword;
+    private EditText edtEmail;
+    private EditText edtPassword;
 
     // firebase
     private FirebaseAuth mAuth;
@@ -47,37 +47,27 @@ public class MainActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        btnLogin = (Button) findViewById(R.id.btnLogin);
-        btnCancel = (Button) findViewById(R.id.btnCancel);
-        btnRegister = (Button) findViewById(R.id.btnRegister);
+        Button btnLogin = (Button) findViewById(R.id.btnLogin);
+        Button btnCancel = (Button) findViewById(R.id.btnCancel);
+        Button btnRegister = (Button) findViewById(R.id.btnRegister);
         edtEmail = (EditText) findViewById(R.id.edtEmail);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String email = edtEmail.getText().toString(), password = edtPassword.getText().toString();
-                if(!email.equals("")  && !password.equals("")){
-                    verifyLogin(email, password);
-                }
-
+        btnLogin.setOnClickListener(view -> {
+            String email = edtEmail.getText().toString();
+            String password = edtPassword.getText().toString();
+            if(!email.equals("")  && !password.equals("")){
+                verifyLogin(email, password);
             }
+
         });
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                edtEmail.setText("");
-                edtPassword.setText("");
-            }
+        btnCancel.setOnClickListener(view -> {
+            edtEmail.setText("");
+            edtPassword.setText("");
         });
 
-        btnRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                openRegisterActivity();
-            }
-        });
+        btnRegister.setOnClickListener(view -> openRegisterActivity());
 
     }
 
@@ -92,38 +82,27 @@ public class MainActivity extends AppCompatActivity {
 
     private void loginUser(String email, String password){
         mAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                    if (task.isSuccessful()) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d("TAG", "signInWithEmail:success");
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        //Toast.makeText(MainActivity.this, "LOGIN OK !!!", Toast.LENGTH_SHORT).show();
-                        openPrincipalActivity();
+            .addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d("TAG", "signInWithEmail:success");
 
-                        salvarUsuarioAtivo(email);
+                    openPrincipalActivity();
 
-                        //updateUI(user);
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.w("TAG", "signInWithEmail:failure", task.getException());
-                        Toast.makeText(MainActivity.this, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
-                        //updateUI(null);
-                    }
+                    salvarUsuarioAtivo(email);
+
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w("TAG", "signInWithEmail:failure", task.getException());
+                    Toast.makeText(MainActivity.this, "Authentication failed.",
+                            Toast.LENGTH_SHORT).show();
                 }
             });
     }
 
     private boolean userConnected(){
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser != null){
-            return  true;
-            //currentUser.reload();
-        }else{
-            return false;
-        }
+        return currentUser != null;
     }
 
     private void openPrincipalActivity(){
@@ -144,21 +123,13 @@ public class MainActivity extends AppCompatActivity {
 
         db.collection("usuarios_ativos").document(email)
                 .set(usuarioAtivo)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("TAG", "DocumentSnapshot successfully written!");
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("TAG", "DocumentSnapshot successfully written!");
 
-                        ContextoLocalDataSource.setEmail(email, MainActivity.this);
-                        buscarUsername();
-                    }
+                    ContextoLocalDataSource.setEmail(email, MainActivity.this);
+                    buscarUsername();
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("TAG", "Error writing document", e);
-                    }
-                });
+                .addOnFailureListener(e -> Log.w("TAG", "Error writing document", e));
     }
 
     private void buscarUsername(){
@@ -167,21 +138,16 @@ public class MainActivity extends AppCompatActivity {
         db.collection("usuarios")
                 .whereEqualTo("email", ContextoLocalDataSource.getEmail(this))
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            List<Usuario> usuarios = new ArrayList<Usuario>();
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                usuarios.add(document.toObject(Usuario.class));
-                            }
-                            ContextoLocalDataSource.setName(usuarios.get(0).getName(), MainActivity.this);
-//                            edtUsername.setText(usuarios.get(0).getName());
-//                            txtEmail.setText(usuarios.get(0).getEmail());
-
-                        } else {
-                            Log.d("TAG", "Error getting documents: ", task.getException());
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<Usuario> usuarios = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            usuarios.add(document.toObject(Usuario.class));
                         }
+                        ContextoLocalDataSource.setName(usuarios.get(0).getName(), MainActivity.this);
+
+                    } else {
+                        Log.d("TAG", "Error getting documents: ", task.getException());
                     }
                 });
     }
@@ -191,21 +157,17 @@ public class MainActivity extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("usuarios_ativos").document(email);
 
-        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    System.out.println("Data: " + document.getData());
-                    if (document.exists()) {
-                        Toast.makeText(MainActivity.this, "Email já está em uso.",
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        loginUser(email, password);
-                    }
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    Toast.makeText(MainActivity.this, "Email já está em uso.",
+                            Toast.LENGTH_SHORT).show();
                 } else {
-                    Log.d("TAG", "get failed with ", task.getException());
+                    loginUser(email, password);
                 }
+            } else {
+                Log.d("TAG", "get failed with ", task.getException());
             }
         });
     }

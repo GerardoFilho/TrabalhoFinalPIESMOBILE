@@ -41,9 +41,12 @@ import br.com.quixada.aniheart.persistence.ContextoLocalDataSource;
 
 public class UserActivity extends AppCompatActivity {
 
+    static final String USUARIOS = "usuarios";
+
     EditText edtUsername;
     TextView txtEmail;
-    Button btnCamera, btnEditar;
+    Button btnCamera;
+    Button btnEditar;
     ImageView imgFotoPerfil;
     private static final int REQUEST_IMAGE_CAPTURE = 101;
 
@@ -58,22 +61,14 @@ public class UserActivity extends AppCompatActivity {
         btnEditar = findViewById(R.id.btnEditar);
         imgFotoPerfil = findViewById(R.id.imgFotoPerfil);
 
-        btnEditar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(edtUsername.getText() != null && !"".equals(edtUsername.getText().toString())
-                    && !edtUsername.getText().toString().equals(ContextoLocalDataSource.getName(UserActivity.this))){
-                    editarUsuario(edtUsername.getText().toString());
-                }
+        btnEditar.setOnClickListener(view -> {
+            if(edtUsername.getText() != null && !"".equals(edtUsername.getText().toString())
+                && !edtUsername.getText().toString().equals(ContextoLocalDataSource.getName(UserActivity.this))){
+                editarUsuario(edtUsername.getText().toString());
             }
         });
 
-        btnCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                takePicture(view);
-            }
-        });
+        btnCamera.setOnClickListener(this::takePicture);
 
     }
 
@@ -84,55 +79,43 @@ public class UserActivity extends AppCompatActivity {
         edtUsername.setText(username);
         txtEmail.setText(ContextoLocalDataSource.getEmail(this));
         carregarFoto();
-        //takeUrl();
     }
 
     private void carregarFoto(){
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("usuarios")
+        db.collection(USUARIOS)
                 .whereEqualTo("email", ContextoLocalDataSource.getEmail(this))
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            List<Usuario> usuarios = new ArrayList<Usuario>();
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                usuarios.add(document.toObject(Usuario.class));
-                            }
-
-                            if(!usuarios.get(0).getUrl().equals("")){
-                                Picasso.get().load(usuarios.get(0).getUrl()).into(imgFotoPerfil);
-                            }
-
-                        } else {
-                            Log.d("TAG", "Error getting documents: ", task.getException());
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<Usuario> usuarios = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            usuarios.add(document.toObject(Usuario.class));
                         }
+
+                        if(!usuarios.get(0).getUrl().equals("")){
+                            Picasso.get().load(usuarios.get(0).getUrl()).into(imgFotoPerfil);
+                        }
+
+                    } else {
+                        Log.d("TAG", "Error getting documents: ", task.getException());
                     }
                 });
     }
 
     private void editarUsuario(String username){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference ref = db.collection("usuarios").document(ContextoLocalDataSource.getEmail(UserActivity.this));
+        DocumentReference ref = db.collection(USUARIOS).document(ContextoLocalDataSource.getEmail(UserActivity.this));
 
 
         ref
             .update("name", username)
-            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                    ContextoLocalDataSource.setName(username, UserActivity.this);
-                    edtUsername.setText(username);
-                }
+            .addOnSuccessListener(aVoid -> {
+                ContextoLocalDataSource.setName(username, UserActivity.this);
+                edtUsername.setText(username);
             })
-            .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.w("TAG", "Error updating document", e);
-                }
-            });
+            .addOnFailureListener(e -> Log.w("TAG", "Error updating document", e));
     }
 
     public void takePicture(View view){
@@ -156,32 +139,6 @@ public class UserActivity extends AppCompatActivity {
         }
     }
 
-    private void salvarImagem(Bitmap bitmap){
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference();
-        StorageReference imageRef = storageRef.child("fotos_perfil/" + ContextoLocalDataSource.getEmail(this) + "_foto_perfil.jpg");
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        UploadTask uploadTask = imageRef.putBytes(data);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                // ...
-                UploadTask.TaskSnapshot t = taskSnapshot;
-            }
-        });
-
-    }
-
     private void urlImagem(Bitmap bitmap) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
@@ -193,33 +150,22 @@ public class UserActivity extends AppCompatActivity {
 
         UploadTask uploadTask = imageRef.putBytes(data);
 
-        //final StorageReference ref = storageRef.child("images/mountains.jpg");
-        //uploadTask = ref.putFile(file);
 
-        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
             public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
                 if (!task.isSuccessful()) {
                     throw task.getException();
                 }
 
-                // Continue with the task to get the download URL
                 return imageRef.getDownloadUrl();
             }
-        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-            @Override
-            public void onComplete(@NonNull Task<Uri> task) {
-                if (task.isSuccessful()) {
-                   //
-                    // Uri downloadUri = task.getResult();
-                    String url = task.getResult().toString();
-                    adicionarUrl(url);
-                    imgFotoPerfil.setImageBitmap(bitmap);
+        }).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String url = task.getResult().toString();
+                adicionarUrl(url);
+                imgFotoPerfil.setImageBitmap(bitmap);
 
-                } else {
-                    // Handle failures
-                    // ...
-                }
             }
         });
 
@@ -227,24 +173,14 @@ public class UserActivity extends AppCompatActivity {
 
     private void adicionarUrl(String url){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference ref= db.collection("usuarios").document(ContextoLocalDataSource.getEmail(UserActivity.this));
+        DocumentReference ref= db.collection(USUARIOS).document(ContextoLocalDataSource.getEmail(UserActivity.this));
 
 
         ref
                 .update("url", url)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(UserActivity.this, "URL adicionada com sucesso !!!",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("TAG", "Error updating document", e);
-                    }
-                });
+                .addOnSuccessListener(aVoid -> Toast.makeText(UserActivity.this, "URL adicionada com sucesso !!!",
+                        Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Log.w("TAG", "Error updating document", e));
     }
 
 }

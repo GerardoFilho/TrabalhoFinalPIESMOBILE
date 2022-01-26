@@ -11,8 +11,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -45,23 +43,8 @@ public class AdapterMensagem extends RecyclerView.Adapter<AdapterMensagem.Mensag
     @Override
     public void onBindViewHolder(@NonNull AdapterMensagem.MensagemViewHolder holder, int position) {
         holder.txtAutorMensagem.setText(mensagemList.get(position).getEmail());
-        holder.txtMensagem.setText(mensagemList.get(position).getMensagem());
+        holder.txtMensagem.setText(mensagemList.get(position).getMessenger());
         carregarFoto(mensagemList.get(position).getEmail(), holder.imgFotoPerfilMensagem);
-
-
-
-//        holder.
-//        holder.txtAutor.setText(mensagemList.get(position).getAutores());
-//        holder.txtCapituloAtual.setText(mangaList.get(position).getCapituloAtual().toString());
-//        Picasso.get().load(mangaList.get(position).getLinkImage()).into(holder.imageButton);
-
-//        holder.imageButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                openMangaActivity(mensagemList.get(position));
-//            }
-//        });
-
 
     }
 
@@ -75,31 +58,27 @@ public class AdapterMensagem extends RecyclerView.Adapter<AdapterMensagem.Mensag
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("usuarios").document(email);
 
-        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
 
-                    if (document.exists()) {
-                        Usuario usuario = document.toObject(Usuario.class);
-                        if(!usuario.getUrl().equals("")){
-                            Picasso.get().load(usuario.getUrl()).into(image);
-                        }
-
-                    } else {
-
+                if (document.exists()) {
+                    Usuario usuario = document.toObject(Usuario.class);
+                    if(!usuario.getUrl().equals("")){
+                        Picasso.get().load(usuario.getUrl()).into(image);
                     }
-                } else {
-                    Log.d("TAG", "get failed with ", task.getException());
+
                 }
+            } else {
+                Log.d("TAG", "get failed with ", task.getException());
             }
         });
     }
 
     public class MensagemViewHolder extends RecyclerView.ViewHolder{
 
-        TextView txtAutorMensagem, txtMensagem;
+        TextView txtAutorMensagem;
+        TextView txtMensagem;
         ImageView imgFotoPerfilMensagem;
 
         public MensagemViewHolder(@NonNull View itemView) {
@@ -113,15 +92,4 @@ public class AdapterMensagem extends RecyclerView.Adapter<AdapterMensagem.Mensag
 
         }
     }
-
-//    private void openMangaActivity(Manga manga){
-//        Intent intent = new Intent(context, MangaActivity.class);
-//        intent.putExtra("titulo", manga.getTitulo());
-//        intent.putExtra("autores", manga.getAutores());
-//        intent.putExtra("capituloAtual", manga.getCapituloAtual().toString());
-//        intent.putExtra("linkImage", manga.getLinkImage());
-//
-//        context.startActivity(intent);
-//        //((Activity)context).finish();
-//    }
 }

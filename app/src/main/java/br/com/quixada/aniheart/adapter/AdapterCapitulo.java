@@ -25,7 +25,8 @@ import br.com.quixada.aniheart.R;
  public class AdapterCapitulo extends RecyclerView.Adapter<AdapterCapitulo.CapituloViewHolder> {
 
     List<String> paginas;
-    String titulo, capitulo;
+    String titulo;
+     String capitulo;
     Context context;
 
 
@@ -76,16 +77,8 @@ import br.com.quixada.aniheart.R;
 
         String caminho = titulo.toLowerCase().replace(" ", "_")+"/"+capitulo+"/"+pagina+".jpg";
 
-         storageRef.child(caminho).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-             @Override
-             public void onSuccess(Uri uri) {
-                 Picasso.get().load(uri).into(holder.imgCapitulo);
-             }
-         }).addOnFailureListener(new OnFailureListener() {
-             @Override
-             public void onFailure(@NonNull Exception exception) {
-                 // Handle any errors
-             }
+         storageRef.child(caminho).getDownloadUrl().addOnSuccessListener(uri -> Picasso.get().load(uri).into(holder.imgCapitulo)).addOnFailureListener(exception -> {
+             // Handle any errors
          });
      }
 

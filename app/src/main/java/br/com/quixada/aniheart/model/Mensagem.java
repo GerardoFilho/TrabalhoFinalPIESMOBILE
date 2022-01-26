@@ -2,7 +2,7 @@ package br.com.quixada.aniheart.model;
 
 public class Mensagem {
 
-    private String mensagem;
+    private String messenger;
     private String email;
     private String name;
     private Long timestamp;
@@ -10,19 +10,19 @@ public class Mensagem {
     public Mensagem() {
     }
 
-    public Mensagem(String mensagem, String email, String name) {
-        this.mensagem = mensagem;
+    public Mensagem(String messenger, String email, String name) {
+        this.messenger = messenger;
         this.email = email;
         this.name = name;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public String getMensagem() {
-        return mensagem;
+    public String getMessenger() {
+        return messenger;
     }
 
-    public void setMensagem(String mensagem) {
-        this.mensagem = mensagem;
+    public void setMessenger(String messenger) {
+        this.messenger = messenger;
     }
 
     public String getEmail() {

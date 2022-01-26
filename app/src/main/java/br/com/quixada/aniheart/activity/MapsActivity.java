@@ -53,35 +53,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void showPositionStudio(String titulo, GoogleMap googleMap){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("mangas").document(titulo).get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                        if(task.isSuccessful()){
-                            DocumentSnapshot document = task.getResult();
-                            if(document.exists()){
-                                Manga manga = document.toObject(Manga.class);
-                                String nome;
-                                Double latitude, longitude;
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        DocumentSnapshot document = task.getResult();
+                        if(document.exists()){
+                            Manga manga = document.toObject(Manga.class);
+                            String nome;
+                            Double latitude;
+                            Double longitude;
 
-                                if(manga.getStudio() != null){
-                                    nome = manga.getStudio().getNome();
-                                    latitude = manga.getStudio().getLatitude();
-                                    longitude = manga.getStudio().getLongitude();
-                                }else{
-                                    nome = "Not Found";
-                                    latitude = 0.0;
-                                    longitude = 0.0;
-                                }
-
-                                LatLng location = new LatLng(latitude, longitude);
-                                mMap.addMarker(new MarkerOptions()
-                                        .position(location)
-                                        .title(nome));
-
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
+                            if(manga.getStudio() != null){
+                                nome = manga.getStudio().getNome();
+                                latitude = manga.getStudio().getLatitude();
+                                longitude = manga.getStudio().getLongitude();
+                            }else{
+                                nome = "Not Found";
+                                latitude = 0.0;
+                                longitude = 0.0;
                             }
-                        }else{
 
+                            LatLng location = new LatLng(latitude, longitude);
+                            mMap.addMarker(new MarkerOptions()
+                                    .position(location)
+                                    .title(nome));
+
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
                         }
                     }
                 });
