@@ -149,12 +149,14 @@
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btnEnviarMensagem"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:clickable="true"
                 android:foregroundGravity="center"
                 app:backgroundTint="@color/black"
+                app:fabSize="normal"
+                app:maxImageSize="48dp"
                 app:rippleColor="@color/white"
                 app:srcCompat="@android:drawable/ic_menu_send" />
 

@@ -158,4 +158,17 @@ public class MangaActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding document", e));
     }
 
+    private void editarMensagem(String mensagem, String titulo, int ID){
+        Mensagem msg = new Mensagem(mensagem, ContextoLocalDataSource.getName(this), "");
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("mangas").document(titulo).collection("mensagens")
+                .add(msg)
+                .addOnSuccessListener(documentReference -> {
+                    edtMensagem.setText("");
+                    carregarMensagens(getIntent().getStringExtra(TITULO));
+                })
+                .addOnFailureListener(e -> Log.w("TAG", "Error adding document", e));
+    }
+
 }
